@@ -6,14 +6,14 @@ OBJMODULES = $(SRCMODULES:.c=.o)
 %.o: %.c %.h
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 
-da: dynarray_test.c $(OBJMODULES)
+exe: dynarray_test.c $(OBJMODULES)
 	$(CC) $(INCLUDES) $(CFLAGS) $^ -o $@
 
-run_tests: da
-	./da
+run_tests: exe
+	./exe
 
-mem_test: da
-	valgrind ./da --leak-check=full -s
+mem_check: exe
+	valgrind ./exe --leak-check=full -s
 
 ifneq (clean, $(SRCMODULES))
 -include deps.mk
@@ -23,4 +23,4 @@ deps.mk: $(SRCMODULES)
 	$(CC) -MM $^ > $@
 
 clean:
-	rm -f *.o da
+	rm -f *.o exe
