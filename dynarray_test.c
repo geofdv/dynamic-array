@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -34,6 +33,13 @@ struct buf_s {
 };
 
 void
+buf_init_empty(buf_t *b)
+{
+	b->data = NULL;
+	b->len = 0;
+}
+
+void
 buf_init_with_value(buf_t *b, int val, int len)
 {
 	int i;
@@ -64,10 +70,15 @@ void
 buf_clean(void *b)
 {
 	buf_t *buf = b;
+
 	if (!buf) return ;
-	free(buf->data);
+
+	if (buf->data) free(buf->data);
 }
 
+/*
+ * Get flat copy of ith element.
+ */
 static void
 test2()
 {
@@ -98,7 +109,7 @@ test2()
 }
 
 /*
- * Make a copy of the first element from dynamic array.
+ * Get address of ith element to make a copy
  */
 static void
 test3()
@@ -108,7 +119,7 @@ test3()
 	buf_t b1, b1_copy;
 	buf_t *b_ptr;
 
-	buf_init_with_value(&b1, 1, 1);
+	buf_init_with_value(&b1, 1 /* value */, 1 /* len */);
 
 	da = da_create(sizeof(buf_t), buf_init_from_buf, buf_clean);
 
@@ -124,12 +135,54 @@ test3()
 	da_destroy(da);
 }
 
+/*
+ * Something like a copy construction in C++
+ */
+static void
+test4()
+{
+	dynarray_t *da;
+
+	buf_t buf;
+
+	buf_t buf_to_get;
+	buf_t buf_to_put;
+
+	buf_init_with_value(&buf, 1 /* value */, 1 /* len */);
+
+	buf_init_empty(&buf_to_get);
+	buf_init_with_value(&buf_to_put, 42 /* value */, 1 /* len */);
+
+	da = da_create(sizeof(buf_t), buf_init_from_buf, buf_clean);
+
+	da_append(da, &buf);
+
+	/* get element at 0 position */
+	da_get_at(da, 0, &buf_to_get);
+	assert(buf_to_get.data[0] == 1);	
+
+	/* put element at 0 position */
+	da_put_at(da, 0, &buf_to_put);
+
+	/* get element at 0 position */
+	da_get_at(da, 0, &buf_to_get);
+	assert(buf_to_get.data[0] == 42);	
+
+	buf_clean(&buf_to_get);
+	buf_clean(&buf_to_put);
+	buf_clean(&buf);
+
+	da_destroy(da);
+}
+
+
 int
 main()
 {
 	test1();
 	test2();
 	test3();
+	test4();
 
 	return 0;
 }

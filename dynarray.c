@@ -1,14 +1,21 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h> /* memcpy */
 
 #include "dynarray.h"
 
+#define address_of(da, i) \
+	&((da)->data[(i) * (da)->elemsz])
+
+#define address_of_last(da) \
+	address_of(da, (da)->nelems)
+
 dynarray_t *
-da_create(size_t elemsz, copy_t copy, destroy_t destroy)
+da_create(size_t elemsz, copy_t copy, clean_t clean)
 {
 	dynarray_t *da;
+
+	assert((copy && clean) || (!copy && !clean));
 
 	da = malloc(sizeof(*da));
 	if (!da)
@@ -20,7 +27,7 @@ da_create(size_t elemsz, copy_t copy, destroy_t destroy)
 	da->cap = 0;
 
 	da->copy = copy;
-	da->destroy = destroy;
+	da->clean = clean;
 
 	return da;
 }
@@ -31,11 +38,10 @@ da_destroy(dynarray_t *da)
 	if (!da)
 		return ;
 
-	if (da->destroy) {
+	if (da->clean) {
 		int i;
 		for (i = 0; i < da->nelems; i++) {
-			void *elem = &da->data[i * da->elemsz];
-			da->destroy(elem);
+			da->clean(address_of(da, i));
 		}
 	}
 
@@ -64,12 +70,11 @@ resize(dynarray_t *da)
 		}
 	}
 
-	/* need to destroy old data */
-	if (da->destroy) {
+	/* need to clean old data */
+	if (da->clean) {
 		int i;
 		for (i = 0; i < da->nelems; i++) {
-			void *elem = &da->data[i * da->elemsz];
-			da->destroy(elem);
+			da->clean(address_of(da, i));
 		}
 	}
 
@@ -77,6 +82,48 @@ resize(dynarray_t *da)
 
 	da->data = new_data;
 	da->cap = new_cap;
+
+	return 0;
+}
+
+int
+da_put_at(dynarray_t *da, int i, void *src)
+{
+	if (!da)
+		return -1;
+
+	/* clean object if needed */
+	if (da->clean) {
+		da->clean(address_of(da, i));
+	}
+
+	/* make copy at ith position */
+	if (da->copy) {
+		da->copy(address_of(da, i), src);	
+	} else {
+		memcpy(address_of(da, i), src, da->elemsz);
+	}
+
+	return 0;
+}
+
+int
+da_get_at(dynarray_t *da, int i, void *dst)
+{
+	if (!da)
+		return -1;
+
+	/* clean dst object if needed */
+	if (da->clean) {
+		da->clean(dst);
+	}
+
+	/* make copy at ith position */
+	if (da->copy) {
+		da->copy(dst, address_of(da, i));	
+	} else {
+		memcpy(dst, address_of(da, i), da->elemsz);
+	}
 
 	return 0;
 }
@@ -95,9 +142,9 @@ da_append(dynarray_t *da, void *elem)
 	}
 
 	if (da->copy) {
-		da->copy(&da->data[da->nelems * da->elemsz], elem);
+		da->copy(address_of_last(da), elem);
 	} else {
-		memcpy(&da->data[da->nelems * da->elemsz], elem, da->elemsz);
+		memcpy(address_of_last(da), elem, da->elemsz);
 	}
 
 	da->nelems++;
