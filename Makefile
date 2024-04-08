@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Werror -g3 -pedantic -DLINUX -D_GNU_SOURCE 
+CFLAGS = -std=c89 -Wall -Werror -g3 -pedantic -DLINUX -D_GNU_SOURCE 
 SRCMODULES = dynarray.c
 OBJMODULES = $(SRCMODULES:.c=.o)
 
