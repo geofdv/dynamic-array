@@ -7,7 +7,7 @@
 #define address_of(da, i) \
 	&((da)->data[(i) * (da)->elemsz])
 
-#define address_of_last(da) \
+#define address_of_first_empty(da) \
 	address_of(da, (da)->nelems)
 
 dynarray_t *
@@ -52,12 +52,14 @@ da_destroy(dynarray_t *da)
 static int
 resize(dynarray_t *da)
 {
+	char *new_data;
+	int new_cap;
 	int i;
 
 	assert(da);
 
-	int new_cap = da->nelems == 0 ? 1 : 2 * da->cap;
-	char *new_data = malloc(da->elemsz * new_cap);
+	new_cap = da->nelems == 0 ? 1 : 2 * da->cap;
+	new_data = malloc(da->elemsz * new_cap);
 	if (!new_data)
 		return -1;
 
@@ -118,7 +120,7 @@ da_get_at(dynarray_t *da, int i, void *dst)
 		da->clean(dst);
 	}
 
-	/* make copy at ith position */
+	/* make copy from element at ith position */
 	if (da->copy) {
 		da->copy(dst, address_of(da, i));	
 	} else {
@@ -142,9 +144,9 @@ da_append(dynarray_t *da, void *elem)
 	}
 
 	if (da->copy) {
-		da->copy(address_of_last(da), elem);
+		da->copy(address_of_first_empty(da), elem);
 	} else {
-		memcpy(address_of_last(da), elem, da->elemsz);
+		memcpy(address_of_first_empty(da), elem, da->elemsz);
 	}
 
 	da->nelems++;
