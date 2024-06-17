@@ -11,11 +11,16 @@ test1()
 	int i;
 
 	da = da_create(sizeof(int), NULL /* no copy */, NULL /* no clean */);
+	assert(da_size(da) == 0);
+	assert(da_capacity(da) == 0);
 
 	for (i = 0; i < 5; i++) {
 		int elem = i;
 		da_append(da, &elem);
+		assert(da_size(da) == i + 1);
 	}
+
+	assert(da_capacity(da) == 1 * 2 * 2 * 2);
 
 	for (i = 0; i < 5; i++) {
 		int elem = da_at_as(da, i, int);

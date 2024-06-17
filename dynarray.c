@@ -155,7 +155,7 @@ da_append(dynarray_t *da, void *elem)
 }
 
 int
-da_is_full(dynarray_t *da)
+da_is_full(const dynarray_t *da)
 {
 	if (!da)
 		return 0;
@@ -163,10 +163,26 @@ da_is_full(dynarray_t *da)
 }
 
 int
-da_is_empty(dynarray_t *da)
+da_is_empty(const dynarray_t *da)
 {
 	if (!da)
 		return 1;
 	return da->nelems == 0;
+}
+
+int
+da_size(const dynarray_t *da)
+{
+	if (!da)
+		return 0;
+	return da->nelems;
+}
+
+int
+da_capacity(const dynarray_t *da)
+{
+	if (!da)
+		return 0;
+	return da->cap;
 }
 

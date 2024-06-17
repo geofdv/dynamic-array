@@ -46,10 +46,16 @@ da_get_at(dynarray_t *da, int i, void *dst);
 
 /* State. */
 int
-da_is_full(dynarray_t *da);
+da_is_full(const dynarray_t *da);
 
 int
-da_is_empty(dynarray_t *da);
+da_is_empty(const dynarray_t *da);
+
+int
+da_size(const dynarray_t *da);
+
+int
+da_capacity(const dynarray_t *da);
 
 #endif /* DYNARRAY_SENTRY_H */
 
